@@ -63,3 +63,16 @@ Combat tests cover wave escalation, spawning limits, hit cones, single-hit accou
 Single-player, one arena, two enemy types, and procedural animation. No progression, save slots, camera rotation, or touch controls. A physical Xbox controller still needs a hardware check; automated tests exercise the standard button mapping. Supported controllers must report a standard mapping in the browser. Low graphics mode disables shadows and reduces render resolution.
 
 Engine references: [Three.js renderer](https://threejs.org/docs/pages/WebGLRenderer.html) and [browser Gamepad API](https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API).
+
+## Live website
+
+Play at https://downcastsystems.com/how/ . `npm run build:site` builds the game
+with asset URLs rooted at `/how/`. The Downcastsystems.com repository owns the
+Cloudflare deployment and copies this output into its `public/how` directory.
+From that repository, run `npm run deploy:how` to test, build, sync, and deploy.
+
+Hosting must send `Cache-Control: public, max-age=0, must-revalidate, no-transform`
+on `/how/*` to prevent the Cloudflare JavaScript Detections injection that
+previously disrupted Xbox Edge controls in One Big Sky. The site also sends
+`Permissions-Policy: gamepad=(self)`. Its deploy checks verify both domains,
+redirects, exact HTML, script-injection absence, and all game asset contents.
