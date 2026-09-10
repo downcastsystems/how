@@ -18,3 +18,16 @@ Single-player desktop prototype. No multiplayer, copied commercial assets, photo
 ## Completion
 
 All implementation and automated acceptance checks completed. Browser review confirmed first-wave completion, the harder second wave, aerial combat, neutral dodge, pause, restart, and defeat. See VERIFICATION.md. Physical controller validation remains a user hardware check.
+
+## Character materials and combat feedback pass
+
+Keep Three.js. Add an original generated skin/hide/leather/iron atlas with local
+asset URLs, correct colour/data texture spaces, and a visible loading-error
+fallback. Improve continuous torso geometry and monster facial detail without
+replacing combat animation or controller mappings. Replace instant knockback
+with a decaying impulse, make brutes resist it, and keep bodies inside the arena.
+Add directional blood on Howard/enemy damage and larger sprays on kills, bounded
+to 180 droplets and 56 temporary floor stains. Verify resource cleanup on expiry
+and restart, hit/miss direction data, geometry normals, the full build, and an
+actual fight in the browser. This remains a procedural model and material pass;
+a sculpted, UV-unwrapped, skinned model is the next step toward the reference.

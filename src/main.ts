@@ -89,13 +89,13 @@ function events() {
     const { x, z, type } = event;
     if (type === 'wave') { announce(`Wave ${String(event.value).padStart(2, '0')}`, event.value === 3 ? 'THE BRUTES HAVE ARRIVED' : 'THE GATES DEMAND MORE'); sound.play('wave'); }
     if (type === 'clear') { announce('A moment of peace.', '+22 HEALTH · THE NEXT WAVE APPROACHES'); sound.play('clear'); saveBest(); }
-    if (type === 'hit') { world.burst(x, z, 0xffca82, event.heavy ? 18 : 8, event.heavy); world.shake = event.heavy ? 0.65 : 0.16; sound.play('hit'); }
-    if (type === 'kill') { world.burst(x, z, 0xc6ae7e, 18); sound.play('kill'); }
+    if (type === 'hit') { world.blood.splatter(x, z, event.dx ?? 0, event.dz ?? 1, false, event.heavy); world.burst(x, z, 0xffca82, event.heavy ? 18 : 8, event.heavy); world.shake = event.heavy ? 0.65 : 0.16; sound.play('hit'); }
+    if (type === 'kill') { world.blood.splatter(x, z, event.dx ?? 0, event.dz ?? 1, true, event.heavy); world.burst(x, z, 0xc6ae7e, 18); sound.play('kill'); }
     if (type === 'spawn') world.burst(x * 0.91, z * 0.91, 0xee8051, 12, true);
     if (type === 'attack') sound.play(event.heavy ? 'heavy' : 'slash');
     if (type === 'dodge' || type === 'jump') sound.play(type);
     if (type === 'land') { world.burst(x, z, 0xa6ad92, event.heavy ? 15 : 5, event.heavy); if (event.heavy) world.shake = 0.5; }
-    if (type === 'hurt') { flashTime = 0.35; world.shake = 0.4; sound.play('hurt'); }
+    if (type === 'hurt') { world.blood.splatter(x, z, event.dx ?? 0, event.dz ?? 1, false, false, event.y); flashTime = 0.35; world.shake = 0.4; sound.play('hurt'); }
     if (type === 'death') { saveBest(); updateHud(); mode = 'dead'; element('death').hidden = false; element('death-stats').textContent = `${game.kills} demons slain · Wave ${game.wave} · ${Math.floor(game.elapsed / 60)}m ${Math.floor(game.elapsed % 60)}s survived`; element('restart').focus(); }
   }
   game.events = [];

@@ -1,8 +1,8 @@
 export type Vec2 = { x: number; z: number };
 export type Input = { x: number; z: number; jump: boolean; slash: boolean; heavy: boolean; dodge: boolean };
 export type Attack = { kind: 'slash' | 'heavy'; time: number; duration: number; hit: boolean; aerial: boolean; stage: number };
-export type Enemy = Vec2 & { id: number; hp: number; maxHp: number; kind: 'hound' | 'brute'; speed: number; damage: number; angle: number; timer: number; state: 'spawn' | 'chase' | 'windup' | 'recover'; stun: number; flash: number; spawnGate: number };
-export type GameEvent = { type: 'spawn' | 'hit' | 'kill' | 'hurt' | 'attack' | 'dodge' | 'jump' | 'land' | 'wave' | 'clear' | 'death'; x: number; z: number; value?: number; heavy?: boolean };
+export type Enemy = Vec2 & { id: number; hp: number; maxHp: number; kind: 'hound' | 'brute'; speed: number; damage: number; angle: number; timer: number; state: 'spawn' | 'chase' | 'windup' | 'recover'; stun: number; flash: number; spawnGate: number; knockX?: number; knockZ?: number; recoil?: number };
+export type GameEvent = { type: 'spawn' | 'hit' | 'kill' | 'hurt' | 'attack' | 'dodge' | 'jump' | 'land' | 'wave' | 'clear' | 'death'; x: number; z: number; value?: number; heavy?: boolean; dx?: number; dz?: number; y?: number };
 export const ARENA_RADIUS = 18;
 export const gates: Vec2[] = [{ x: -12, z: -12 }, { x: 12, z: -12 }, { x: -15, z: 8 }, { x: 15, z: 8 }];
 export const length = (v: Vec2) => Math.hypot(v.x, v.z);
@@ -30,7 +30,7 @@ export function inAttackCone(origin: Vec2, target: Vec2, angle: number, range: n
 }
 
 export class Combat {
-  player = { x: 0, z: 4, y: 0, vy: 0, angle: Math.PI, hp: 100, invulnerable: 0, dodgeTime: 0, dodgeCooldown: 0, dodgeDir: { x: 0, z: -1 }, attack: null as Attack | null, moving: false };
+  player = { x: 0, z: 4, y: 0, vy: 0, angle: Math.PI, hp: 100, hurtTime: 0, invulnerable: 0, dodgeTime: 0, dodgeCooldown: 0, dodgeDir: { x: 0, z: -1 }, attack: null as Attack | null, moving: false };
   enemies: Enemy[] = [];
   events: GameEvent[] = [];
   wave = 0; kills = 0; combo = 0; comboTimer = 0; waveKills = 0; remaining = 0; waveTotal = 0;
@@ -39,12 +39,13 @@ export class Combat {
   private chain = 0;
   private chainTimer = 0;
   private buffered: 'slash' | 'heavy' | null = null;
-  emit(type: GameEvent['type'], x = this.player.x, z = this.player.z, value?: number, heavy?: boolean) { this.events.push({ type, x, z, value, heavy }); }
+  emit(type: GameEvent['type'], x = this.player.x, z = this.player.z, value?: number, heavy?: boolean, direction?: Vec2) { this.events.push({ type, x, z, value, heavy, dx: direction?.x, dz: direction?.z, y: type === 'hurt' ? this.player.y + 1.5 : 1.4 }); }
   update(dt: number, input: Input) {
     if (this.dead) return;
     dt = Math.min(dt, 0.05);
     this.elapsed += dt;
     const p = this.player;
+    p.hurtTime = Math.max(0, p.hurtTime - dt);
     p.invulnerable = Math.max(0, p.invulnerable - dt);
     p.dodgeCooldown = Math.max(0, p.dodgeCooldown - dt);
     this.comboTimer -= dt; if (this.comboTimer <= 0) this.combo = 0;
@@ -85,6 +86,11 @@ export class Combat {
     this.updateWaves(dt);
     for (const e of this.enemies) {
       e.flash = Math.max(0, e.flash - dt);
+      e.recoil = Math.max(0, (e.recoil ?? 0) - dt);
+      const decay = Math.exp(-9 * dt), travel = (1 - decay) / 9;
+      e.x += (e.knockX ?? 0) * travel; e.z += (e.knockZ ?? 0) * travel;
+      e.knockX = (e.knockX ?? 0) * decay; e.knockZ = (e.knockZ ?? 0) * decay;
+      constrain(e, ARENA_RADIUS - 0.3);
       e.stun = Math.max(0, e.stun - dt);
       if (e.stun > 0) continue;
       e.timer -= dt;
@@ -97,7 +103,8 @@ export class Combat {
       } else if (e.state === 'windup' && e.timer <= 0) {
         if (inAttackCone(e, p, e.angle, e.kind === 'brute' ? 3.2 : 2.6, 1.0) && p.y < 1.25 && p.invulnerable <= 0) {
           p.hp = Math.max(0, p.hp - e.damage); p.invulnerable = 0.65; this.combo = 0;
-          this.emit('hurt', p.x, p.z, e.damage);
+          p.hurtTime = 0.35;
+          this.emit('hurt', p.x, p.z, e.damage, false, normalize({ x: p.x - e.x, z: p.z - e.z }));
           if (!p.hp) { this.dead = true; this.emit('death'); return; }
         }
         e.state = 'recover'; e.timer = 0.8;
@@ -130,9 +137,12 @@ export class Combat {
       if (e.state === 'spawn' || !inAttackCone(p, e, p.angle, range, arc)) continue;
       const damage = heavy ? 65 : a.stage === 3 ? 32 : 24;
       e.hp -= damage; e.flash = 0.16; e.stun = heavy ? 0.85 : 0.32; e.state = 'chase';
-      const away = normalize({ x: e.x - p.x, z: e.z - p.z }); e.x += away.x * (heavy ? 2.4 : 0.45); e.z += away.z * (heavy ? 2.4 : 0.45); constrain(e);
-      this.combo++; this.comboTimer = 3; struck = true; this.emit('hit', e.x, e.z, damage, heavy);
-      if (e.hp <= 0) { this.kills++; this.waveKills++; if (this.kills % 4 === 0) p.hp = Math.min(100, p.hp + 4); this.emit('kill', e.x, e.z, e.id, heavy); }
+      const away = normalize({ x: e.x - p.x, z: e.z - p.z });
+      if (!length(away)) { away.x = Math.sin(p.angle); away.z = Math.cos(p.angle); }
+      const impulse = (heavy ? 18 : 7) * (e.kind === 'brute' ? 0.6 : 1);
+      e.knockX = away.x * impulse; e.knockZ = away.z * impulse; e.recoil = 0.4;
+      this.combo++; this.comboTimer = 3; struck = true; this.emit('hit', e.x, e.z, damage, heavy, away);
+      if (e.hp <= 0) { this.kills++; this.waveKills++; if (this.kills % 4 === 0) p.hp = Math.min(100, p.hp + 4); this.emit('kill', e.x, e.z, e.id, heavy, away); }
     }
     this.enemies = this.enemies.filter(e => e.hp > 0);
     if (heavy && !struck) this.emit('land', p.x + Math.sin(p.angle) * 2.5, p.z + Math.cos(p.angle) * 2.5, 0, true);

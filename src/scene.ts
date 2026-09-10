@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Combat, Enemy, gates } from './combat';
+import { surfaceMaterial } from './materials';
+import { torsoGeometry } from './anatomy';
+import { BloodEffects } from './blood';
 
 const gold = 0xb28b50, stone = 0x536362, dark = 0x202e32;
 const mat = (color: number, roughness = 0.8, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
 const metal = mat(0xb7c5c6, 0.27, 0.8), bronze = mat(gold, 0.4, 0.68), obsidian = mat(dark, 0.74, 0.2);
-const skin = mat(0xb67f59, 0.67), skinLight = mat(0xc18b62, 0.7), cloth = mat(0x393b39), red = mat(0x713e31), hair = mat(0x252c2b), gray = mat(0x8e9690);
-const sphere = new THREE.SphereGeometry(1, 16, 12), box = new THREE.BoxGeometry(1, 1, 1);
+const skin = surfaceMaterial('skin', 0xe7d2bb), skinLight = surfaceMaterial('skin', 0xf1ddc8), cloth = surfaceMaterial('leather', 0x756c65), red = surfaceMaterial('leather', 0xc2a095), hair = mat(0x252c2b), gray = mat(0x8e9690);
+const characterIron = surfaceMaterial('iron', 0xa8afb2);
+const sphere = new THREE.SphereGeometry(1, 24, 18), box = new THREE.BoxGeometry(1, 1, 1);
 function mesh(parent: THREE.Object3D, geometry: THREE.BufferGeometry, material: THREE.Material, pos = [0, 0, 0], scale = [1, 1, 1]) {
   const m = new THREE.Mesh(geometry, material); m.position.set(...pos as [number, number, number]); m.scale.set(...scale as [number, number, number]); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
 }
@@ -28,19 +32,15 @@ function sword(parent: THREE.Object3D) {
 }
 export function makeHoward(): Actor {
   const root = new THREE.Group(), body = pivot(root, 0, 1.54, 0);
-  ell(body, skin, [0, 0.48, 0], [0.69, 0.8, 0.32]);
-  for (const s of [-1, 1]) {
-    ell(body, skinLight, [s * 0.31, 0.68, 0.21], [0.36, 0.29, 0.2]);
-    for (let i = 0; i < 3; i++) ell(body, skin, [s * 0.16, 0.3 - i * 0.17, 0.29], [0.17, 0.125, 0.085]);
-  }
+  mesh(body, torsoGeometry(), skin);
   cyl(body, skin, [0, 1.19, 0], 0.19, 0.28, 0.32);
   const head = pivot(body, 0, 1.54, 0.015);
-  ell(head, skinLight, [0, 0, 0], [0.32, 0.41, 0.3]);
-  ell(head, skin, [0, -0.2, 0.07], [0.25, 0.21, 0.23]);
+  ell(head, skinLight, [0, 0, 0], [0.295, 0.40, 0.275]);
+  ell(head, skin, [0, -0.2, 0.07], [0.235, 0.19, 0.21]);
   ell(head, skinLight, [0, 0.0, 0.29], [0.072, 0.1, 0.09]);
   for (const s of [-1, 1]) {
     ell(head, skin, [s * 0.31, -0.015, 0], [0.062, 0.115, 0.08]);
-    ell(head, gray, [s * 0.275, 0.115, -0.005], [0.07, 0.24, 0.23]);
+    ell(head, gray, [s * 0.275, 0.115, -0.005], [0.028, 0.21, 0.20]);
     cube(head, hair, [s * 0.14, 0.1, 0.285], [0.19, 0.032, 0.035]);
     const rim = new THREE.Shape(); rim.moveTo(-0.105, -0.062); rim.lineTo(0.105, -0.062); rim.lineTo(0.105, 0.066); rim.lineTo(-0.105, 0.066); rim.closePath();
     const hole = new THREE.Path(); hole.moveTo(-0.085, -0.043); hole.lineTo(-0.085, 0.047); hole.lineTo(0.085, 0.047); hole.lineTo(0.085, -0.043); hole.closePath(); rim.holes.push(hole);
@@ -53,7 +53,7 @@ export function makeHoward(): Actor {
   cube(head, hair, [0, -0.197, 0.289], [0.13, 0.012, 0.012]);
   ell(head, gray, [0, -0.285, 0.232], [0.11, 0.049, 0.021]);
   ell(head, hair, [0, 0.25, -0.04], [0.32, 0.2, 0.29]);
-  for (let i = 0; i < 6; i++) { const lock = ell(head, i === 0 ? gray : hair, [-0.2 + i * 0.078, 0.34, -0.01], [0.075, 0.105, 0.25]); lock.rotation.z = -0.22; }
+  for (let i = 0; i < 6; i++) { const lock = ell(head, i === 0 ? gray : hair, [-0.2 + i * 0.078, 0.34, -0.01], [0.075, 0.05, 0.25]); lock.rotation.z = -0.22; }
   // A crossed leather harness and bronze fastening.
   const strap = cube(body, red, [0, 0.55, 0.334], [0.14, 1.12, 0.058]); strap.rotation.z = -0.65;
   ell(body, bronze, [0.04, 0.61, 0.386], [0.1, 0.1, 0.025]);
@@ -67,15 +67,15 @@ export function makeHoward(): Actor {
     const leg = pivot(root, s * 0.29, 1.28, 0); limbs.push(leg);
     ell(leg, cloth, [0, -0.24, 0], [0.25, 0.4, 0.24]);
     ell(leg, skin, [0, -0.66, 0], [0.185, 0.38, 0.18]);
-    cyl(leg, obsidian, [0, -0.86, 0], 0.19, 0.16, 0.42);
+    cyl(leg, characterIron, [0, -0.86, 0], 0.19, 0.16, 0.42);
     cyl(leg, bronze, [0, -0.65, 0], 0.198, 0.198, 0.055);
     ell(leg, obsidian, [0, -1.13, 0.11], [0.205, 0.14, 0.33]);
     const arm = pivot(body, s * 0.7, 0.84, 0); limbs.push(arm);
-    ell(arm, skinLight, [0, -0.06, 0], [0.29, 0.32, 0.29]);
-    ell(arm, skin, [s * 0.05, -0.34, 0], [0.22, 0.31, 0.22]);
-    ell(arm, skinLight, [s * 0.05, -0.28, 0.09], [0.21, 0.23, 0.17]);
+    ell(arm, skinLight, [0, -0.06, 0], [0.235, 0.29, 0.24]);
+    ell(arm, skin, [s * 0.05, -0.34, 0], [0.205, 0.35, 0.195]);
+    ell(arm, skinLight, [s * 0.05, -0.28, 0.09], [0.175, 0.26, 0.105]);
     ell(arm, skin, [0, -0.65, 0.03], [0.17, 0.3, 0.17]);
-    cyl(arm, obsidian, [0, -0.68, 0.03], 0.18, 0.145, 0.27);
+    cyl(arm, characterIron, [0, -0.68, 0.03], 0.18, 0.145, 0.27);
     cyl(arm, bronze, [0, -0.56, 0.03], 0.185, 0.185, 0.045);
     ell(arm, skinLight, [0, -0.91, 0.04], [0.145, 0.18, 0.13]);
     swords.push(sword(arm)); arm.rotation.z = s * 0.12;
@@ -91,12 +91,20 @@ export function makeHoward(): Actor {
 }
 function makeEnemy(kind: Enemy['kind']): Actor {
   const root = new THREE.Group(), body = pivot(root, 0, 1.06, 0), brute = kind === 'brute';
-  const flesh = mat(brute ? 0x756359 : 0x465f5a, 0.9), armor = mat(0x323b3d, 0.62, 0.35), bone = mat(0xb8b29c);
+  const flesh = surfaceMaterial('hide', brute ? 0xc2aaa0 : 0xb3c7b8), armor = surfaceMaterial('iron', 0x949e98), bone = mat(0xaaa18a);
   const glow = new THREE.MeshBasicMaterial({ color: 0xffab63 });
-  ell(body, flesh, [0, 0.4, 0], [0.52, 0.62, 0.29]);
-  ell(body, armor, [0, 0.56, -0.02], [0.56, 0.38, 0.34]);
+  mesh(body, torsoGeometry(true), flesh, [0, 0, 0], [0.84, 0.93, 0.92]);
+  ell(body, armor, [0, 0.68, -0.15], [0.47, 0.29, 0.24]);
   ell(body, flesh, [0, 1.03, 0.14], [0.25, 0.3, 0.24]);
-  cube(body, armor, [0, 1.2, 0.16], [0.37, 0.13, 0.4]);
+  ell(body, flesh, [0, 0.91, 0.25], [0.20, 0.16, 0.15]);
+  ell(body, obsidian, [0, 0.93, 0.365], [0.13, 0.057, 0.018]);
+  for (let tooth = 0; tooth < 6; tooth++) {
+    const fang = mesh(body, new THREE.ConeGeometry(0.022, 0.075, 5), bone, [(tooth - 2.5) * 0.038, 0.948, 0.388]); fang.rotation.x = Math.PI;
+  }
+  for (const side of [-1, 1]) {
+    const brow = ell(body, flesh, [side * 0.125, 1.13, 0.29], [0.135, 0.075, 0.1]); brow.rotation.z = side * 0.23;
+    ell(body, flesh, [side * 0.19, 1.0, 0.26], [0.095, 0.13, 0.08]);
+  }
   for (const s of [-1, 1]) {
     ell(body, glow, [s * 0.115, 1.06, 0.347], [0.065, 0.035, 0.025]);
     const horn = mesh(body, new THREE.ConeGeometry(0.095, 0.55, 7), bone, [s * 0.25, 1.44, 0.1]); horn.rotation.z = -s * 0.45;
@@ -132,6 +140,7 @@ export class World {
   fire: THREE.Mesh[] = [];
   slash: THREE.Mesh;
   dust: THREE.Points;
+  blood: BloodEffects;
   shake = 0;
   highQuality = true;
   private random = seeded(7);
@@ -146,6 +155,7 @@ export class World {
     const sun = new THREE.DirectionalLight(0xffdcaa, 3.8); sun.position.set(-18, 30, -20); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -26; sun.shadow.camera.right = 26; sun.shadow.camera.top = 26; sun.shadow.camera.bottom = -26; sun.shadow.normalBias = 0.045; this.scene.add(sun);
     const rim = new THREE.DirectionalLight(0xa0d3d8, 2.0); rim.position.set(8, 12, 15); this.scene.add(rim);
     this.buildArena(); this.scene.add(this.howard.root);
+    this.blood = new BloodEffects(this.scene);
     this.slash = mesh(this.scene, new THREE.RingGeometry(1.7, 2.9, 56, 1, 0, Math.PI * 1.45), new THREE.MeshBasicMaterial({ color: 0xffd99a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
     const pts = new Float32Array(360 * 3);
     for (let i = 0; i < 360; i++) { pts[i * 3] = (this.random() - 0.5) * 65; pts[i * 3 + 1] = this.random() * 18; pts[i * 3 + 2] = (this.random() - 0.5) * 65; }
@@ -248,8 +258,8 @@ export class World {
       this.effects.push({ mesh: ring, velocity: new THREE.Vector3(), life: 0.45, max: 0.45, ring: true });
     }
   }
-  reset() { for (const actor of this.actors.values()) this.removeActor(actor); this.actors.clear(); for (const e of this.effects) this.removeEffect(e); this.effects = []; }
-  private removeActor(a: Actor) { this.scene.remove(a.root); const gs = new Set<THREE.BufferGeometry>(), ms = new Set<THREE.Material>(); a.root.traverse(o => { if (o instanceof THREE.Mesh) { if (o.geometry !== sphere && o.geometry !== box) gs.add(o.geometry); if (Array.isArray(o.material)) o.material.forEach(m => ms.add(m)); else ms.add(o.material); } }); gs.forEach(g => g.dispose()); ms.forEach(m => { if (![metal, bronze, obsidian, skin, skinLight, cloth, red, hair, gray].includes(m as THREE.MeshStandardMaterial)) m.dispose(); }); }
+  reset() { this.blood.reset(); for (const actor of this.actors.values()) this.removeActor(actor); this.actors.clear(); for (const e of this.effects) this.removeEffect(e); this.effects = []; }
+  private removeActor(a: Actor) { this.scene.remove(a.root); const gs = new Set<THREE.BufferGeometry>(), ms = new Set<THREE.Material>(); a.root.traverse(o => { if (o instanceof THREE.Mesh) { if (o.geometry !== sphere && o.geometry !== box) gs.add(o.geometry); if (Array.isArray(o.material)) o.material.forEach(m => ms.add(m)); else ms.add(o.material); } }); gs.forEach(g => g.dispose()); ms.forEach(m => { if (![metal, bronze, obsidian, skin, skinLight, cloth, red, hair, gray, characterIron].includes(m as THREE.MeshStandardMaterial)) m.dispose(); }); }
   private removeEffect(e: Effect) { this.scene.remove(e.mesh); if (e.mesh.geometry !== box) e.mesh.geometry.dispose(); (e.mesh.material as THREE.Material).dispose(); }
   update(game: Combat, dt: number, time: number, menu: boolean) {
     const p = game.player, hero = this.howard;
@@ -257,7 +267,7 @@ export class World {
     const run = p.moving && !menu && !p.attack ? Math.sin(time * 12) : Math.sin(time * 1.8) * 0.035;
     hero.leftLeg.rotation.x = run * 0.68; hero.rightLeg.rotation.x = -run * 0.68;
     hero.body.position.y = 1.54 + (p.moving && !menu ? Math.abs(run) * 0.08 : Math.sin(time * 2) * 0.018);
-    hero.body.rotation.set(0, 0, 0); hero.root.rotation.x = 0;
+    hero.body.rotation.set(-Math.sin(p.hurtTime / 0.35 * Math.PI) * 0.22, 0, 0); hero.root.rotation.x = 0;
     hero.leftArm.rotation.set(-run * 0.25 - 0.05, 0, -0.14); hero.rightArm.rotation.set(run * 0.25 - 0.05, 0, 0.14);
     hero.axe.visible = p.attack?.kind === 'heavy'; hero.swords.forEach(s => { s.visible = !hero.axe.visible; });
     if (p.y > 0.1) { hero.leftLeg.rotation.x = -0.7; hero.rightLeg.rotation.x = 0.65; hero.leftArm.rotation.x = -0.5; hero.rightArm.rotation.x = -0.5; }
@@ -293,7 +303,7 @@ export class World {
       actor.root.scale.set(scale, scale * emerge, scale); actor.root.position.set(e.x, 0, e.z); actor.root.rotation.y = e.angle;
       const stride = e.state === 'chase' && e.stun <= 0 ? Math.sin(time * 9 + e.id) : 0;
       actor.leftLeg.rotation.x = stride * 0.6; actor.rightLeg.rotation.x = -stride * 0.6;
-      actor.body.rotation.x = 0.17; actor.body.position.y = 1.06 + Math.abs(stride) * 0.055;
+      actor.body.rotation.x = 0.17 - Math.sin(Math.min(1, (e.recoil ?? 0) / 0.4) * Math.PI) * 0.55; actor.body.position.y = 1.06 + Math.abs(stride) * 0.055;
       actor.leftArm.rotation.x = -stride * 0.5; actor.rightArm.rotation.x = stride * 0.5;
       if (e.state === 'windup') { actor.leftArm.rotation.x = -2.1; actor.rightArm.rotation.x = -2.1; actor.body.rotation.x = -0.2; }
       if (e.state === 'recover') { actor.leftArm.rotation.x = -0.85; actor.rightArm.rotation.x = -0.85; actor.body.rotation.x = 0.45; }
@@ -304,6 +314,7 @@ export class World {
     for (const portal of this.portals) portal.traverse(o => { if (o instanceof THREE.Mesh && o.material instanceof THREE.ShaderMaterial) o.material.uniforms.time.value = time; });
     this.fire.forEach((f, i) => { f.scale.y = 1.8 + Math.sin(time * 12 + i * 2) * 0.3; f.scale.x = 0.65 + Math.sin(time * 9 + i) * 0.12; });
     this.dust.rotation.y = time * 0.009;
+    this.blood.update(dt);
     for (const e of this.effects) {
       e.life -= dt;
       if (e.ring) e.mesh.scale.setScalar(1 + (1 - e.life / e.max) * 4.5);

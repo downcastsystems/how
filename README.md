@@ -25,7 +25,7 @@ Node.js 22.12 or newer is needed for a fresh installation. Chrome or Edge with h
 | Pause/resume | Escape or P | Menu |
 | Start/restart after defeat | Enter | A or Menu |
 
-Tap attacks in succession to chain them. Three successive sword attacks finish with a broad spinning hit. Jump, then press either attack for an aerial strike. The axe has a longer windup, more damage, and knockback. Attack without movement to turn toward a nearby enemy automatically.
+Tap attacks in succession to chain them. Three successive sword attacks finish with a broad spinning hit. Jump, then press either attack for an aerial strike. The axe has a longer windup, more damage, and stronger knockback. Hits push enemies backward with a short slide and recoil; brutes resist the impulse. Howard and monsters spray blood when damaged, with larger sprays on kills. Floor stains fade after 24 seconds and clear on restart. Attack without movement to turn toward a nearby enemy automatically.
 
 Dodge with a direction to roll that way. Dodge with no direction to choose a landing point as far as possible from the nearest monster, inside the arena. Rolls briefly prevent damage. Glowing red rings warn of enemy attacks. Jump above a strike or roll clear before it lands.
 
@@ -44,7 +44,7 @@ Dodge with a direction to roll that way. Dodge with no direction to choose a lan
 
 Three.js renders the scene. TypeScript implements combat, waves, input, and animation. Vite provides local development and a static production build. Web Audio synthesizes sound effects. Controllers use the browser's standard Gamepad API layout.
 
-The models, architecture, texture, particles, and animations are original procedural assets. No commercial game assets or external game template were used. Howard is a stylized interpretation of the supplied reference, not a photorealistic likeness. Fonts ship locally, so normal play makes no third-party asset requests.
+The models, architecture, floor texture, particles, and animations are original procedural assets. Character surfaces use an original generated material atlas, with detailed skin, demon hide, leather, and iron. See `docs/material-textures.md` for the asset and generation prompt. No commercial game assets or external game template were used. Howard is a stylized interpretation of the supplied reference, not a photorealistic likeness. Fonts ship locally, so normal play makes no third-party asset requests.
 
 ## Checks and builds
 

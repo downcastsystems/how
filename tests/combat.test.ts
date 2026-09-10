@@ -84,4 +84,34 @@ describe('Howard combat', () => {
     expect(g.events.filter(e => e.type === 'attack')).toHaveLength(2);
   });
 
+  it('sword hits slide an enemy backward over time rather than teleporting', () => {
+    const g = sandbox(); g.enemies = [enemy(0, 2, 200)];
+    g.update(0.01, { ...idleInput(), slash: true }); tick(g, 0.1);
+    const impactZ = g.enemies[0].z;
+    expect(impactZ).toBeGreaterThan(1.8);
+    expect(g.enemies[0].knockZ).toBeLessThan(0);
+    tick(g, 0.18); expect(g.enemies[0].z).toBeLessThan(impactZ - 0.25);
+  });
+  it('heavy strikes push farther and brutes resist knockback', () => {
+    const distance = (kind: 'slash' | 'heavy', brute = false) => {
+      const g = sandbox(); const e = enemy(0, 2, 500); e.kind = brute ? 'brute' : 'hound';
+      g.enemies = [e]; g.update(0.01, { ...idleInput(), [kind]: true }); tick(g, 0.75);
+      return 2 - e.z;
+    };
+    expect(distance('heavy')).toBeGreaterThan(distance('slash') * 1.7);
+    expect(distance('heavy', true)).toBeLessThan(distance('heavy') * 0.8);
+  });
+  it('knockback cannot push enemies outside the arena', () => {
+    const g = sandbox(); g.player.z = -15; const e = enemy(0, -17.2, 500); g.enemies = [e];
+    g.update(0.01, { ...idleInput(), heavy: true }); tick(g, 0.9);
+    expect(Math.hypot(e.x, e.z)).toBeLessThanOrEqual(ARENA_RADIUS - 0.3 + 0.00001);
+  });
+  it('damage events give blood a direction and misses produce no hit event', () => {
+    const g = sandbox(); g.enemies = [enemy(0, 2, 200)];
+    g.update(0.01, { ...idleInput(), slash: true }); tick(g, 0.15);
+    expect(g.events.find(e => e.type === 'hit')).toMatchObject({ dx: 0, dz: -1, y: 1.4 });
+    const empty = sandbox(); empty.update(0.01, { ...idleInput(), heavy: true }); tick(empty, 0.6);
+    expect(empty.events.some(e => e.type === 'hit' || e.type === 'hurt')).toBe(false);
+  });
+
 });
