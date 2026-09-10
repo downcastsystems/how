@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111919" />
+    <title>Howard of War | The endless courtyard</title>
+  </head>
+  <body>
+    <canvas id="game" aria-label="Howard of War 3D arena"></canvas>
+    <div class="vignette"></div>
+    <header class="brand"><span class="seal">武</span><span>HOWARD <i>OF</i> WAR</span><small>THE ENDLESS COURTYARD</small></header>
+    <div id="hud" hidden>
+      <section class="vitals"><div class="eyebrow">HOWARD <span>THE UNBROKEN</span></div><div class="health-track"><div id="health-bar"></div></div><div class="health-caption"><span id="health-text">100 / 100</span><span id="stance">TWIN BLADES</span></div></section>
+      <section class="wave-info"><div class="eyebrow">WAVE <b id="wave">01</b></div><div id="wave-state">The gates awaken</div><div class="wave-track"><div id="wave-progress"></div></div></section>
+      <section class="score"><span class="eyebrow">DEMONS SLAIN</span><strong id="kills">0</strong><small id="best">BEST 0</small></section>
+      <div id="combo"></div>
+      <div id="announcement" role="status"></div>
+      <div id="damage-flash"></div>
+      <footer class="combat-controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>SPACE</kbd><b class="pad a">A</b> Jump</span><span><kbd>J</kbd><b class="pad x">X</b> Slash</span><span><kbd>K</kbd><b class="pad y">Y</b> Axe slam</span><span><kbd>L / SHIFT</kbd><b class="pad b">B</b> Dodge</span><span><kbd>ESC</kbd> Pause</span></footer>
+    </div>
+    <main id="menu" class="panel">
+      <div class="eyebrow copper">AN ENDLESS ARENA SURVIVAL</div>
+      <h1>Some men age.<br><em>Legends don’t.</em></h1>
+      <p>Four gates. An army without end.<br>Two blades and a very short temper.</p>
+      <button id="start" class="primary">ENTER THE ARENA <span>→</span></button>
+      <div class="menu-note">PRESS ENTER OR <b class="pad a">A</b> TO BEGIN</div>
+      <div class="instructions"><div><span>01</span><p><b>Keep moving.</b><br>Slash with J. Bring the axe down with K.</p></div><div><span>02</span><p><b>Make some room.</b><br>Space to jump. Shift to roll toward safety.</p></div><div><span>03</span><p><b>Outlast the gates.</b><br>Every wave brings more powerful demons.</p></div></div>
+    </main>
+    <div id="pause" class="modal" hidden><div><span class="eyebrow copper">TAKE A BREATH</span><h2>The gates can wait.</h2><p>Press Escape or controller Menu to resume.</p><button id="resume" class="primary">RETURN TO BATTLE →</button><button id="restart-pause" class="secondary">Start a new run</button></div></div>
+    <div id="death" class="modal" hidden><div><span class="eyebrow copper">EVEN LEGENDS FALL</span><h2>A worthy last stand.</h2><p id="death-stats"></p><button id="restart" class="primary">RISE AGAIN →</button><p class="menu-note">ENTER OR CONTROLLER A TO RESTART</p></div></div>
+    <div id="bottom-meta"><span class="live-dot"></span><span id="controller">KEYBOARD READY · CONNECT A GAMEPAD ANY TIME</span></div>
+    <div class="settings"><button id="sound" aria-label="Toggle sound">SOUND ON</button><button id="quality" aria-label="Toggle graphics quality">QUALITY HIGH</button></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
